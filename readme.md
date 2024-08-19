@@ -84,3 +84,8 @@
     - Issue draw one more time at upated location
     > This causes some flicker :/
 - Sprites should wrap around if drawing off-screen!
+
+## To-Do
+
+- [ ] Implement RNG correctly
+- [ ] What do all the bitwise operations do?

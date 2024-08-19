@@ -77,6 +77,162 @@ public:
     }
   }
 
+  // these are the actual instructions !!!
+
+  // 00E0: CLS
+  void OP_00E0() {
+    // set all pixels in display to 0
+    //  memset sets a given number of chars (bytes) in dest to what we specify
+
+    memset(video, 0, sizeof(video));
+  }
+
+  // 00EE: RET
+  void OP_00EE() {
+    // stack return
+    // decrement stack pointer and set pc to instruction it points to now
+    --sp;
+    pc = stack[sp];
+  }
+
+  // 1xxx: JP addr
+  void OP_1xxx() {
+    // jump; sets program counter to value xxx
+    std::uint16_t target_addr = opcode & 0x0FFFu; // what does this bitwise do?
+    pc = target_addr;
+  }
+
+  // note ahead: cycle() automatically moves pc up by += 2 with it
+  // if any instr. contain pc += 2, it means they're skipping therefore!
+
+  // 2xxx: CALL addr
+  void OP_2xxx() {
+    // call subroutine at xxx
+    // we want to return; put curr. pc at top of stack
+    // pc += 2 when cycling; the pc we are pushing holds instruction after CALL
+    // this "readies up" the next instruction after the subroutine
+    std::uint16_t target_addr = opcode & 0x0FFFu;
+    stack[sp] = pc;
+    ++sp;
+    pc = target_addr;
+  }
+
+  // 3xkk: SE Vx, byte
+  void OP_3xkk() {
+    // skip next instr if Vx = kk (what the fuck?)
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t byte = opcode & 0x00FFu;
+
+    if (registers[Vx] == byte) {
+      pc += 2;
+    }
+  }
+
+  // 4xkk: SNE Vx, byte
+  void OP_4xkk() {
+    // skip next instr if Vx != kk
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t byte = opcode & 0x00FFu;
+
+    if (registers[Vx] != byte) {
+      pc += 2;
+    }
+  }
+
+  // 5xy0: SE Vx, Vy
+  void OP_5xy0() {
+    // skip next instruction if Vx = Vy
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+
+    if (registers[Vx] == registers[Vy]) {
+      pc += 2;
+    }
+  }
+
+  // 6xkk - LD Vx, byte
+  void OP_6xkk() {
+    // set Vx = kk
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t byte = opcode & 0x00FFu;
+
+    registers[Vx] = byte;
+  }
+
+  // 7xkk - ADD Vx, byte
+  void OP_7xkk() {
+    // set Vx = Vx + kk
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t byte = opcode & 0x00FFu;
+
+    registers[Vx] += byte;
+  }
+
+  // 8xy0 - LD Vx, Vy
+  void OP_8xy0() {
+    // set Vx = Vy
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+
+    registers[Vx] = registers[Vy];
+  }
+
+  // 8xy1 - OR Vx, Vy
+  void OP_8xy1() {
+    // set Vx = Vx | Vy
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+
+    registers[Vx] |= registers[Vy];
+  }
+
+  // 8xy2 - AND Vx, Vy
+  void OP_8xy2() {
+    // set Vx = Vx & Vy
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+
+    registers[Vx] &= registers[Vy];
+  }
+
+  // 8xy3 - XOR Vx, Vy
+  void OP_8xy3(){
+    // set Vx = Vx ^ Vy
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+
+    registers[Vx] ^= registers[Vy];
+  }
+
+  // 8xy4 - ADD Vx, Vy
+  void OP_8xy4(){
+    // set Vx = Vx + Vy
+    // set VF = 1 if overflow (res > 255) otherwise 0 (remember CDA?)
+    // only lowest 8 bits of result are kept in Vx
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+    
+    std::uint16_t sum = registers[Vx] + registers[Vy]; 
+
+    registers[0xF] = (sum > 255U) ? 1 : 0;
+    
+    registers[Vx] = sum & 0xFFu;
+  }
+
+  // 8xy5 - SUB Vx, Vy
+  void OP_8xy5(){
+    // set Vx = Vx - Vy
+    // if Vx > Vy, VF is set to 1, otherwise 0
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+    
+    registers[0xF] = (registers[Vx] > registers[Vy]) ? 1 : 0;
+
+    registers[Vx] -= registers[Vy];
+  } 
+
+  // left off at 8xy6 
+
   CHIP8() {
     // initialize pc at start address
     pc = START_ADDRESS;
@@ -87,7 +243,9 @@ public:
     }
 
     // seed random generator using system clock
-    randGen(); // is the system clock in the room with us? (this should take a parameter!)
-    randByte = std::uniform_int_distribution<uint8_t>(0, 255U); // wat does this do? call it to get random number!
+    randGen(); // is the system clock in the room with us? (this should take a
+               // parameter!)
+    randByte = std::uniform_int_distribution<uint8_t>(
+        0, 255U); // wat does this do? call it to get random number!
   }
 };
