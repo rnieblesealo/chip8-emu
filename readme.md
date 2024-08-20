@@ -85,7 +85,39 @@
     > This causes some flicker :/
 - Sprites should wrap around if drawing off-screen!
 
-## To-Do
+# C++ Notes
+
+## Hex
+- **[Guide!](https://learn.sparkfun.com/tutorials/hexadecimal/all)**
+- Appending `u` to hex values tells the compiler they're unsigned
+    - e.g. `0xFFFu`
+
+## Functions of Bitwise Operations
+- **AND** is intersection; **OR** is union
+> Like in discrete!
+
+### What Bitwise is Doing
+- CHIP-8 instructions are stored MSB-first
+- `&` extracts bits; if we do that to an opcode, we're like "extracting" parameters from it
+> Pretty much everything follows from this!
+- Within an opcode:
+    - `nnn` represents an address
+    - `kk` represents a byte; a value
+    - `Vx` represents a register
+
+## Code
+- `class std::ifstream(filename, traits)` input class to operate on files
+    - Traits is a single stream of bits that represents opening params
+        - `std::ios::binary` opens in binary mode
+        - `std::ios::ate` seeks end of stream after open
+        > Use a bitwise OR to combine them!
+- `type std::streampos` represents a position within a file  
+- `function std::ifstream::tellg()` returns curr. position in input sequence/stream
+- `function std::ifstream::seekg(x, y)` moves x characters (- for left, + for right) starting at y 
+- `function std::ifstream::read(dest, n)` copies file bytes up to n into dest buffer
+- `function memset(d, r, n)` takes buffer d and replaces up to n characters (bytes) for r
+
+# To-Do
 
 - [ ] Implement RNG correctly
 - [ ] What do all the bitwise operations do?

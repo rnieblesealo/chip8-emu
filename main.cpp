@@ -77,7 +77,7 @@ public:
     }
   }
 
-  // these are the actual instructions !!!
+  // these are the actual instructions
 
   // 00E0: CLS
   void OP_00E0() {
@@ -231,7 +231,33 @@ public:
     registers[Vx] -= registers[Vy];
   } 
 
-  // left off at 8xy6 
+  // 8xy6 - SHR Vx
+  void OP_8xy6(){
+    // right shift
+    // if lsb of Vx is 1, VF set to 1, otherwise 0
+    // then Vx divided by 2 (a right shift divides by 2 throwing out remainders)
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    
+    // save lsb
+    registers[0xF] = (registers[Vx] & 0x1u);
+
+    registers[Vx] >>= 1;
+  }
+
+  // 8xy7 - SUBN Vx, Vy
+  void OP_8xy7(){
+    // if Vy > Vx, VF set to 1, otherwise 0
+    // set Vx = Vy - Vx; VF set to NOT borrow 
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+   
+    registers[0xF] = (registers[Vy] > registers[Vx]) ? 1 : 0;
+
+    registers[Vx] = registers[Vy] - registers[Vx];
+  }
+
+  // left off at 8xyE
+  // try to implement the rest yourself :)
 
   CHIP8() {
     // initialize pc at start address
