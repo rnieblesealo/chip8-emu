@@ -1,4 +1,3 @@
-#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <random>
@@ -256,8 +255,22 @@ public:
     registers[Vx] = registers[Vy] - registers[Vx];
   }
 
-  // left off at 8xyE
-  // try to implement the rest yourself :)
+  // 8xyE  SHL Vx, Vy
+  void OP_8xyE(){
+    // set Vx = Vx SHL 1
+    // if msb of Vx is 1, VF set to 1, otherwise 0
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+
+    // msb check
+    // my soln: registers[0xF] = ((Vx & 0xF000u) == 1) ? 1 : 0;
+    // guide soln:
+    registers[0xF] = (registers[Vx] & 0x80u) >> 7u;
+
+    
+    registers[Vx] <<= 1;
+  }
+
+  // pick up after here
 
   CHIP8() {
     // initialize pc at start address
