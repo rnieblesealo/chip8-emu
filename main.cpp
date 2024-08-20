@@ -5,6 +5,8 @@
 const unsigned int START_ADDRESS = 0x200;
 const unsigned int FONTSET_SIZE = 80;
 const unsigned int FONTSET_START_ADDRESS = 0x50;
+const unsigned int VIDEO_WIDTH = 800;
+const unsigned int VIDEO_HEIGHT = 600;
 
 // 16 chars represented by 5 rows each; rows are like scanlines encoded as hex
 // values so we need 16 characters * 5 bytes = 80 bytes array
@@ -270,7 +272,81 @@ public:
     registers[Vx] <<= 1;
   }
 
-  // pick up after here
+  // 9xy0 - SNE Vx, Vy
+  void OP_9xy0(){
+    // skip next instruction if Vx != Vy 
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+
+    if (registers[Vx] != registers[Vy]){
+      pc += 2;
+    }
+  }
+
+  // Annn - LD I, addr
+  void OP_Annn(){
+    // set val. of register I (index reg) to nnn
+    std::uint16_t addr = opcode & 0x0FFFu;
+    index = addr;
+  }
+
+  // Bnnn - JP V0, addr
+  void OP_Bnnn(){
+    // jump to location nnn + V0
+    std::uint16_t addr = opcode & 0x0FFFu;
+    pc = registers[0] + addr;
+  }
+
+  // Cxkk - RND Vx, byte
+  void OP_Cxkk(){
+    // set Vx = random byte AND kk
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t byte = opcode & 0x00FFu;
+
+    // i'm not entirely sure why this works
+    registers[Vx] = randByte(randGen) & byte;
+  }
+
+  // Dxyn - DRW Vx, Vy, nibble
+  void OP_Dxyn(){
+    // display n-byte sprite, stored starting at i
+    // do so at (Vx, Vy)
+    // VF = collision
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+    std::uint8_t height = opcode & 0x000Fu;
+
+    // modulus is so that wrapping occurs if over screen bounds
+    std::uint8_t xPos = registers[Vx] % VIDEO_WIDTH;
+    std::uint8_t yPos = registers[Vy] % VIDEO_HEIGHT;
+
+    // no collision as starting state
+    registers[0xF] = 0;
+  
+    for (unsigned int row = 0; row < height; ++row){
+      std::uint8_t spriteByte = memory[index + row];
+      
+      for (unsigned int col = 0; col < 8; ++col){
+        // get sprite pixel value by masking with the byte row; 1 if on, 0 if off
+        std::uint8_t spritePixel = spriteByte & (0x80u >> col); 
+
+        // get corresponding screen pixel's address
+        std::uint32_t* screenPixel = &video[(yPos + row) * VIDEO_WIDTH];
+
+        if (spritePixel){
+          // if the sprite pixel is on and the screen pixel is also on, there is collision!
+          if (*screenPixel == 0xFFFFFFFF){
+            registers[0xF] = 1;
+          }
+          
+          // since we get here if sprite pixel on, XOR with 0xFFFFFFFF effectively does so with the pixel
+          *screenPixel ^= 0xFFFFFFFF;
+        }
+      }
+    }
+  }
+
+  // RESUME HERE
 
   CHIP8() {
     // initialize pc at start address
