@@ -197,7 +197,7 @@ public:
   }
 
   // 8xy3 - XOR Vx, Vy
-  void OP_8xy3(){
+  void OP_8xy3() {
     // set Vx = Vx ^ Vy
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
@@ -206,39 +206,39 @@ public:
   }
 
   // 8xy4 - ADD Vx, Vy
-  void OP_8xy4(){
+  void OP_8xy4() {
     // set Vx = Vx + Vy
     // set VF = 1 if overflow (res > 255) otherwise 0 (remember CDA?)
     // only lowest 8 bits of result are kept in Vx
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-    
-    std::uint16_t sum = registers[Vx] + registers[Vy]; 
+
+    std::uint16_t sum = registers[Vx] + registers[Vy];
 
     registers[0xF] = (sum > 255U) ? 1 : 0;
-    
+
     registers[Vx] = sum & 0xFFu;
   }
 
   // 8xy5 - SUB Vx, Vy
-  void OP_8xy5(){
+  void OP_8xy5() {
     // set Vx = Vx - Vy
     // if Vx > Vy, VF is set to 1, otherwise 0
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-    
+
     registers[0xF] = (registers[Vx] > registers[Vy]) ? 1 : 0;
 
     registers[Vx] -= registers[Vy];
-  } 
+  }
 
   // 8xy6 - SHR Vx
-  void OP_8xy6(){
+  void OP_8xy6() {
     // right shift
     // if lsb of Vx is 1, VF set to 1, otherwise 0
     // then Vx divided by 2 (a right shift divides by 2 throwing out remainders)
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    
+
     // save lsb
     registers[0xF] = (registers[Vx] & 0x1u);
 
@@ -246,19 +246,19 @@ public:
   }
 
   // 8xy7 - SUBN Vx, Vy
-  void OP_8xy7(){
+  void OP_8xy7() {
     // if Vy > Vx, VF set to 1, otherwise 0
-    // set Vx = Vy - Vx; VF set to NOT borrow 
+    // set Vx = Vy - Vx; VF set to NOT borrow
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-   
+
     registers[0xF] = (registers[Vy] > registers[Vx]) ? 1 : 0;
 
     registers[Vx] = registers[Vy] - registers[Vx];
   }
 
   // 8xyE  SHL Vx, Vy
-  void OP_8xyE(){
+  void OP_8xyE() {
     // set Vx = Vx SHL 1
     // if msb of Vx is 1, VF set to 1, otherwise 0
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
@@ -268,47 +268,46 @@ public:
     // guide soln:
     registers[0xF] = (registers[Vx] & 0x80u) >> 7u;
 
-    
     registers[Vx] <<= 1;
   }
 
   // 9xy0 - SNE Vx, Vy
-  void OP_9xy0(){
-    // skip next instruction if Vx != Vy 
+  void OP_9xy0() {
+    // skip next instruction if Vx != Vy
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t Vy = (opcode & 0x00F0u) >> 4u;
 
-    if (registers[Vx] != registers[Vy]){
+    if (registers[Vx] != registers[Vy]) {
       pc += 2;
     }
   }
 
   // Annn - LD I, addr
-  void OP_Annn(){
+  void OP_Annn() {
     // set val. of register I (index reg) to nnn
     std::uint16_t addr = opcode & 0x0FFFu;
     index = addr;
   }
 
   // Bnnn - JP V0, addr
-  void OP_Bnnn(){
+  void OP_Bnnn() {
     // jump to location nnn + V0
     std::uint16_t addr = opcode & 0x0FFFu;
     pc = registers[0] + addr;
   }
 
   // Cxkk - RND Vx, byte
-  void OP_Cxkk(){
+  void OP_Cxkk() {
     // set Vx = random byte AND kk
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t byte = opcode & 0x00FFu;
 
-    // i'm not entirely sure why this works
+    // i'm not entirely sure how this works
     registers[Vx] = randByte(randGen) & byte;
   }
 
   // Dxyn - DRW Vx, Vy, nibble
-  void OP_Dxyn(){
+  void OP_Dxyn() {
     // display n-byte sprite, stored starting at i
     // do so at (Vx, Vy)
     // VF = collision
@@ -322,31 +321,159 @@ public:
 
     // no collision as starting state
     registers[0xF] = 0;
-  
-    for (unsigned int row = 0; row < height; ++row){
+
+    for (unsigned int row = 0; row < height; ++row) {
       std::uint8_t spriteByte = memory[index + row];
-      
-      for (unsigned int col = 0; col < 8; ++col){
-        // get sprite pixel value by masking with the byte row; 1 if on, 0 if off
-        std::uint8_t spritePixel = spriteByte & (0x80u >> col); 
+
+      for (unsigned int col = 0; col < 8; ++col) {
+        // get sprite pixel value by masking with the byte row; 1 if on, 0 if
+        // off
+        std::uint8_t spritePixel = spriteByte & (0x80u >> col);
 
         // get corresponding screen pixel's address
-        std::uint32_t* screenPixel = &video[(yPos + row) * VIDEO_WIDTH];
+        std::uint32_t *screenPixel = &video[(yPos + row) * VIDEO_WIDTH];
 
-        if (spritePixel){
-          // if the sprite pixel is on and the screen pixel is also on, there is collision!
-          if (*screenPixel == 0xFFFFFFFF){
+        if (spritePixel) {
+          // if the sprite pixel is on and the screen pixel is also on, there is
+          // collision!
+          if (*screenPixel == 0xFFFFFFFF) {
             registers[0xF] = 1;
           }
-          
-          // since we get here if sprite pixel on, XOR with 0xFFFFFFFF effectively does so with the pixel
+
+          // since we get here if sprite pixel on, XOR with 0xFFFFFFFF
+          // effectively does so with the pixel
           *screenPixel ^= 0xFFFFFFFF;
         }
       }
     }
   }
 
-  // RESUME HERE
+  // Ex9E - SKP Vx
+  void OP_Ex9E() {
+    // skip next instr if key with value in Vx is pressed
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t key = registers[Vx];
+
+    if (keypad[key]) {
+      pc += 2;
+    }
+  }
+
+  // ExA1 - SKNP Vx
+  void OP_ExA1() {
+    // skip next instruction if key with value in Vx not pressed
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t key = registers[Vx];
+
+    if (!keypad[key]) {
+      pc += 2;
+    }
+  }
+
+  // Fx07 - LD Vx, DT
+  void OP_Fx07() {
+    // set Vx = delay timer value
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+
+    registers[Vx] = delayTimer;
+  }
+
+  // Fx0A = LD Vx, K
+  void OP_Fx0A() {
+    // NOTE: this is my own solution
+    // wait for keypress, store value of key in Vx
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+
+    unsigned int pressed = 0;
+    for (unsigned int i = 0; i < 16; ++i) {
+      if (keypad[i]){
+        registers[Vx] = i;
+        pressed = 1;
+      } 
+    }
+   
+    // if nothing pressed, decrease pc, effectively leaving us at same instr.
+    if (!pressed){
+      pc -= 2;
+    }
+  }
+
+  // Fx15 - LD DT, Vx
+  void OP_Fx15(){
+    // set delay timer = Vx
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    
+    delayTimer = registers[Vx];
+  }
+ 
+  // Fx18 - LD ST, Vx
+  void OP_Fx18(){
+    // set sound timer = Vx 
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+
+    soundTimer = registers[Vx];
+  }
+
+  // Fx1E - ADD I, Vx
+  void OP_Fx1E(){
+    // store I + Vx in register I
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+
+    index += registers[Vx];
+  }
+
+  // Fx29 - LD F, Vx
+  void OP_Fx29(){
+    // set I = memory location of sprite for digit Vx
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t digit = registers[Vx];
+
+    // a font char is 5 bytes; offset from start in multiples of this!
+    index = FONTSET_START_ADDRESS + (digit * 5);
+  }
+
+  // Fx33 - LD B, Vx
+  void OP_Fx33(){
+    // TAKE NOTE: this is how we extract digits by mod division!
+    // take Vx value and:
+    // 1. place hundreds digit in memory at I
+    // 2. tens at I + 1
+    // 3. ones at I + 2
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    std::uint8_t value = registers[Vx];
+    
+    // ones
+    memory[index + 2] = value % 10; 
+    value /= 10;
+
+    // tens
+    memory[index + 1] = value % 10; 
+    value /= 10;
+    
+    // hundreds
+    memory[index] = value % 10; 
+  }
+
+  // Fx55 - LD [I], Vx
+  void OP_Fx55(){
+    // store registers V0 through Vx in memory starting at location I
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+
+    for (std::uint8_t i = 0; i <= Vx; ++i){
+      memory[index + i] = registers[i];
+    }
+  }
+
+  // Fx65 - LD Vx, [I]
+  void OP_Fx65(){
+    // read values from mem starting at location I 
+    // copy reads to registers V0 thru Vx
+    std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    
+    for (std::uint8_t i = 0; i <= Vx; ++i){
+      registers[i] = memory[index + i];
+    }
+  }
 
   CHIP8() {
     // initialize pc at start address
