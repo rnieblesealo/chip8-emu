@@ -44,6 +44,17 @@ public:
   std::uint32_t video[64 * 32];
   std::uint16_t opcode;
 
+  // function pointer tables
+  // see guide, this is kinda weird
+
+  // LEFT OFF IMPLEMENTING THESE
+
+  void (*table[0xF + 1u])();
+  void (*table0[0xE + 1u])();
+  void (*table8[0xE + 1u])();
+  void (*tableE[0xE + 1u])();
+  void (*tableF[0x65 + 1u])();
+
   // chip8 has a pseudo-random number generator that can write to a register!
   std::default_random_engine randGen;
   std::uniform_int_distribution<uint8_t> randByte;
@@ -386,36 +397,36 @@ public:
 
     unsigned int pressed = 0;
     for (unsigned int i = 0; i < 16; ++i) {
-      if (keypad[i]){
+      if (keypad[i]) {
         registers[Vx] = i;
         pressed = 1;
-      } 
+      }
     }
-   
+
     // if nothing pressed, decrease pc, effectively leaving us at same instr.
-    if (!pressed){
+    if (!pressed) {
       pc -= 2;
     }
   }
 
   // Fx15 - LD DT, Vx
-  void OP_Fx15(){
+  void OP_Fx15() {
     // set delay timer = Vx
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    
+
     delayTimer = registers[Vx];
   }
- 
+
   // Fx18 - LD ST, Vx
-  void OP_Fx18(){
-    // set sound timer = Vx 
+  void OP_Fx18() {
+    // set sound timer = Vx
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 
     soundTimer = registers[Vx];
   }
 
   // Fx1E - ADD I, Vx
-  void OP_Fx1E(){
+  void OP_Fx1E() {
     // store I + Vx in register I
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 
@@ -423,7 +434,7 @@ public:
   }
 
   // Fx29 - LD F, Vx
-  void OP_Fx29(){
+  void OP_Fx29() {
     // set I = memory location of sprite for digit Vx
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t digit = registers[Vx];
@@ -433,7 +444,7 @@ public:
   }
 
   // Fx33 - LD B, Vx
-  void OP_Fx33(){
+  void OP_Fx33() {
     // TAKE NOTE: this is how we extract digits by mod division!
     // take Vx value and:
     // 1. place hundreds digit in memory at I
@@ -441,38 +452,47 @@ public:
     // 3. ones at I + 2
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t value = registers[Vx];
-    
+
     // ones
-    memory[index + 2] = value % 10; 
+    memory[index + 2] = value % 10;
     value /= 10;
 
     // tens
-    memory[index + 1] = value % 10; 
+    memory[index + 1] = value % 10;
     value /= 10;
-    
+
     // hundreds
-    memory[index] = value % 10; 
+    memory[index] = value % 10;
   }
 
   // Fx55 - LD [I], Vx
-  void OP_Fx55(){
+  void OP_Fx55() {
     // store registers V0 through Vx in memory starting at location I
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 
-    for (std::uint8_t i = 0; i <= Vx; ++i){
+    for (std::uint8_t i = 0; i <= Vx; ++i) {
       memory[index + i] = registers[i];
     }
   }
 
   // Fx65 - LD Vx, [I]
-  void OP_Fx65(){
-    // read values from mem starting at location I 
+  void OP_Fx65() {
+    // read values from mem starting at location I
     // copy reads to registers V0 thru Vx
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    
-    for (std::uint8_t i = 0; i <= Vx; ++i){
+
+    for (std::uint8_t i = 0; i <= Vx; ++i) {
       registers[i] = memory[index + i];
     }
+  }
+
+
+  // secondary table functions
+  // what the fuck do they do?
+
+  void Table0(){
+    // this shit dont work
+    //((*this).*(table0[opcode & 0x000Fu]))();
   }
 
   CHIP8() {
@@ -489,5 +509,23 @@ public:
                // parameter!)
     randByte = std::uniform_int_distribution<uint8_t>(
         0, 255U); // wat does this do? call it to get random number!
+    
+    // set up function pointer table
+    // table[0x0] = 
+    // table[0x1] =
+    // table[0x2] =
+    // table[0x3] =
+    // table[0x4] =
+    // table[0x5] =
+    // table[0x6] =
+    // table[0x7] =
+    // table[0x8] =
+    // table[0x9] =
+    // table[0xA] =
+    // table[0xB] =
+    // table[0xC] =
+    // table[0xD] =
+    // table[0xE] =
+    // table[0xF] = 
   }
 };
