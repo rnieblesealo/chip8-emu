@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <random>
@@ -49,11 +50,13 @@ public:
 
   // LEFT OFF IMPLEMENTING THESE
 
-  void (CHIP8::*table[0xF + 1u])();
-  void (CHIP8::*table0[0xE + 1u])();
-  void (CHIP8::*table8[0xE + 1u])();
-  void (CHIP8::*tableE[0xE + 1u])();
-  void (CHIP8::*tableF[0x65 + 1u])();
+  typedef void (CHIP8::*CHIP8Func)();
+
+  CHIP8Func table[0xF + 1u];
+  CHIP8Func table0[0xE + 1u];
+  CHIP8Func table8[0xE + 1u];
+  CHIP8Func tableE[0xE + 1u];
+  CHIP8Func tableF[0x65 + 1u];
 
   // chip8 has a pseudo-random number generator that can write to a register!
   std::default_random_engine randGen;
@@ -498,6 +501,33 @@ public:
 
   void OP_NULL() { return; }
 
+  // cpu cycling!
+  
+  void Cycle(){
+    // fetches next instruction
+    // decodes the instruction
+    // runs it!
+    
+    // fetch
+    // remember opcode is 2 bytes; so we must stitch together whats in pc and pc + 1
+    opcode = (memory[pc] << 8u) | memory[pc + 1];
+
+    // move pc
+    pc += 2;
+
+    // decode
+    // use first digit of opcode to index the function pointer tables
+    ((*this).*(table[(opcode & 0xF000u) >> 12u]))();
+
+    // decrement timers if nonzero
+    if (delayTimer > 0)
+      --delayTimer;
+
+    if (soundTimer > 0){
+      --soundTimer;
+    }
+  }  
+
   CHIP8() {
     // initialize pc at start address
     pc = START_ADDRESS;
@@ -531,6 +561,46 @@ public:
     table[0xE] = &CHIP8::TableE;
     table[0xF] = &CHIP8::TableF;
 
-    // continue at forloop
+    // init tables of 0, 8, E instructions with null ops
+    for (size_t i = 0; i <= 0xE; ++i) {
+      table0[i] = &CHIP8::OP_NULL;
+      table8[i] = &CHIP8::OP_NULL;
+      tableE[i] = &CHIP8::OP_NULL;
+    }
+
+    // fill in table 0
+    table0[0x0] = &CHIP8::OP_00E0;
+    table0[0xE] = &CHIP8::OP_00EE;
+
+    // now table 8
+    table8[0x0] = &CHIP8::OP_8xy0;
+    table8[0x1] = &CHIP8::OP_8xy1;
+    table8[0x2] = &CHIP8::OP_8xy2;
+    table8[0x3] = &CHIP8::OP_8xy3;
+    table8[0x4] = &CHIP8::OP_8xy4;
+    table8[0x5] = &CHIP8::OP_8xy5;
+    table8[0x6] = &CHIP8::OP_8xy6;
+    table8[0x7] = &CHIP8::OP_8xy7;
+    table8[0xE] = &CHIP8::OP_8xyE;
+
+    // e
+    tableE[0x1] = &CHIP8::OP_ExA1;
+    tableE[0xE] = &CHIP8::OP_Ex9E;
+
+    // now initialize the F table
+    for (size_t i = 0; i <= 0x65; ++i) {
+      tableF[i] = &CHIP8::OP_NULL;
+    }
+
+    // and fill it!
+    tableF[0x07] = &CHIP8::OP_Fx07;
+    tableF[0x0A] = &CHIP8::OP_Fx0A;
+    tableF[0x15] = &CHIP8::OP_Fx15;
+    tableF[0x18] = &CHIP8::OP_Fx18;
+    tableF[0x1E] = &CHIP8::OP_Fx1E;
+    tableF[0x29] = &CHIP8::OP_Fx29;
+    tableF[0x33] = &CHIP8::OP_Fx33;
+    tableF[0x55] = &CHIP8::OP_Fx55;
+    tableF[0x65] = &CHIP8::OP_Fx65;
   }
 };
