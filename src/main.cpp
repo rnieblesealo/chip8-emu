@@ -521,6 +521,7 @@ public:
     // + 1
     opcode = (memory[pc] << 8u) | memory[pc + 1];
 
+    
     // move pc
     pc += 2;
 
@@ -808,6 +809,7 @@ int main(int argc, const char **argv) {
     if (dt > cycleDelay) {
       lastCycleTime = currentTime;
 
+      // issue in here
       core.Cycle();
 
       platform.Update(core.video, videoPitch);

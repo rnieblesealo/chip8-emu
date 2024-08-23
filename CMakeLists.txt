@@ -4,8 +4,10 @@ project(chip8)
 # expose includes to lsp
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# use system sdl, not vendored one
+# compile with debug information
+# set(CMAKE_CXX_FLAGS "g")
 
+# use system sdl, not vendored one
 find_package(SDL2 REQUIRED)
 include_directories(SDL2Test ${SDL2_INCLUDE_DIRS})
 
