@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(chip8emu)
+project(chip8)
 
 # expose includes to lsp
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -9,9 +9,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(SDL2 REQUIRED)
 include_directories(SDL2Test ${SDL2_INCLUDE_DIRS})
 
-add_executable(chip8emu
-  src/core.cpp
-  src/platform.cpp
+add_executable(chip8
+  src/main.cpp
 )
 
-target_link_libraries(chip8emu ${SDL2_LIBRARIES})
+target_link_libraries(chip8 ${SDL2_LIBRARIES})
