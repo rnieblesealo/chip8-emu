@@ -14,8 +14,8 @@
 const unsigned int START_ADDRESS = 0x200;
 const unsigned int FONTSET_SIZE = 80;
 const unsigned int FONTSET_START_ADDRESS = 0x50;
-const unsigned int VIDEO_WIDTH = 800;
-const unsigned int VIDEO_HEIGHT = 600;
+const unsigned int VIDEO_WIDTH = 64;
+const unsigned int VIDEO_HEIGHT = 32;
 
 // 16 chars represented by 5 rows each; rows are like scanlines encoded as hex
 // values so we need 16 characters * 5 bytes = 80 bytes array
@@ -353,7 +353,7 @@ public:
         std::uint8_t spritePixel = spriteByte & (0x80u >> col);
 
         // get corresponding screen pixel's address
-        std::uint32_t *screenPixel = &video[(yPos + row) * VIDEO_WIDTH];
+        std::uint32_t *screenPixel = &video[(yPos + row) * VIDEO_WIDTH + (xPos + col)];
 
         if (spritePixel) {
           // if the sprite pixel is on and the screen pixel is also on, there is
@@ -521,7 +521,6 @@ public:
     // + 1
     opcode = (memory[pc] << 8u) | memory[pc + 1];
 
-    
     // move pc
     pc += 2;
 

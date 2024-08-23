@@ -5,7 +5,7 @@ project(chip8)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # compile with debug information
-# set(CMAKE_CXX_FLAGS "g")
+set(CMAKE_BUILD_TYPE Debug)
 
 # use system sdl, not vendored one
 find_package(SDL2 REQUIRED)
