@@ -40,31 +40,28 @@ const std::uint8_t fontset[FONTSET_SIZE] = {
 
 class CHIP8 {
 public:
-  std::uint8_t registers[16]; // type is usigned fixed-width 8-bit integer,
+  std::uint8_t registers[16] = {0}; // type is usigned fixed-width 8-bit integer,
                               // braces init. array to 0
-  std::uint8_t memory[4096];
-  std::uint16_t index;
-  std::uint16_t pc;
-  std::uint16_t stack[16];
-  std::uint8_t sp;
-  std::uint8_t delayTimer;
-  std::uint8_t soundTimer;
-  std::uint8_t keypad[16];
-  std::uint32_t video[64 * 32];
+  std::uint8_t memory[4096]= {0};
+  std::uint16_t index = {0};
+  std::uint16_t pc = {0};
+  std::uint16_t stack[16] = {0};
+  std::uint8_t sp = {0};
+  std::uint8_t delayTimer = {0};
+  std::uint8_t soundTimer = {0};
+  std::uint8_t keypad[16] = {0};
+  std::uint32_t video[64 * 32] = {0};
   std::uint16_t opcode;
 
   // function pointer tables
-  // see guide, this is kinda weird
-
-  // LEFT OFF IMPLEMENTING THESE
 
   typedef void (CHIP8::*CHIP8Func)();
 
-  CHIP8Func table[0xF + 1u];
-  CHIP8Func table0[0xE + 1u];
-  CHIP8Func table8[0xE + 1u];
-  CHIP8Func tableE[0xE + 1u];
-  CHIP8Func tableF[0x65 + 1u];
+  CHIP8Func table[0xF + 1u] = {0};
+  CHIP8Func table0[0xE + 1u] = {0};
+  CHIP8Func table8[0xE + 1u] = {0};
+  CHIP8Func tableE[0xE + 1u] = {0};
+  CHIP8Func tableF[0x65 + 1u] = {0};
 
   // chip8 has a pseudo-random number generator that can write to a register!
   std::default_random_engine randGen;
@@ -95,7 +92,7 @@ public:
         memory[START_ADDRESS + i] = buffer[i];
       }
 
-      // free buffer, we don't need dat shi
+      // free buffer, we don't need dat
       delete[] buffer;
     }
   }
@@ -142,7 +139,7 @@ public:
 
   // 3xkk: SE Vx, byte
   void OP_3xkk() {
-    // skip next instr if Vx = kk (what the fuck?)
+    // skip next instr if Vx = kk
     std::uint8_t Vx = (opcode & 0x0F00u) >> 8u;
     std::uint8_t byte = opcode & 0x00FFu;
 
@@ -353,7 +350,8 @@ public:
         std::uint8_t spritePixel = spriteByte & (0x80u >> col);
 
         // get corresponding screen pixel's address
-        std::uint32_t *screenPixel = &video[(yPos + row) * VIDEO_WIDTH + (xPos + col)];
+        std::uint32_t *screenPixel =
+            &video[(yPos + row) * VIDEO_WIDTH + (xPos + col)];
 
         if (spritePixel) {
           // if the sprite pixel is on and the screen pixel is also on, there is
@@ -792,7 +790,7 @@ int main(int argc, const char **argv) {
   CHIP8 core;
   core.LoadROM(romFilename);
 
-  int videoPitch = sizeof(core.video[0] * VIDEO_WIDTH);
+  int videoPitch = sizeof(core.video[0]) * VIDEO_WIDTH;
 
   auto lastCycleTime = std::chrono::high_resolution_clock::now();
 
@@ -808,7 +806,6 @@ int main(int argc, const char **argv) {
     if (dt > cycleDelay) {
       lastCycleTime = currentTime;
 
-      // issue in here
       core.Cycle();
 
       platform.Update(core.video, videoPitch);
