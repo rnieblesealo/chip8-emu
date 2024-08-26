@@ -119,7 +119,7 @@
 
 # To-Do
 
-- [ ] Fix bus error; happens when trying to decode
+- [X] Fix bus error; happens when trying to decode
     - Learn GDB!
 - [X] Implement RNG correctly
 - [X] What do all the bitwise operations do?
