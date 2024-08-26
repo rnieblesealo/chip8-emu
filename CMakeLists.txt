@@ -13,6 +13,11 @@ include_directories(SDL2Test ${SDL2_INCLUDE_DIRS})
 
 add_executable(chip8
   src/main.cpp
+  src/platform.cpp
+  src/core.cpp
 )
+
+# add the includes
+target_include_directories(chip8 PRIVATE include/)
 
 target_link_libraries(chip8 ${SDL2_LIBRARIES})
